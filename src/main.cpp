@@ -27,6 +27,7 @@ const int hill_count = sizeof(hills_list) / sizeof(hills_list[0]);
 #define H_ARG "--H="
 #define L_ARG "--L="
 #define DT_ARG "--dt="
+#define METHOD_ARG "--integration-method="
 
 void print_help()
 {
@@ -42,6 +43,7 @@ void print_help()
     std::cout << H_ARG << "<число>\t Задать высоту холма в м (по умочанию: " << DEFAULT_H << ")\n";
     std::cout << L_ARG << "<число>\t Задать длину холма в м (по умочанию: " << DEFAULT_L << ")\n";
     std::cout << DT_ARG << "<число>\tЗадать шаг симуляции в с (по умолчанию: " << DEFAULT_DT << ")\n";
+    //std::cout << METHOD_ARG << 
 }
 
 void print_hills()
@@ -106,7 +108,11 @@ int main(int argc, char *argv[])
         }
         else if (arg.find(DT_ARG) == 0)
         {
-            params.L = std::stod(arg.substr(strlen(DT_ARG)));
+            params.dt = std::stod(arg.substr(strlen(DT_ARG)));
+        }
+        else if (arg.find(METHOD_ARG) == 0)
+        {
+            params.method = (integration_method)std::stoi(arg.substr(strlen(METHOD_ARG)));
         }
         else
         {

@@ -13,6 +13,8 @@ const double DEFAULT_DT = 0.001;
 const double G = 9.80665;
 
 
+enum class integration_method { Euler, RK4 };
+
 struct simulation_params_t
 {
     double m1 = DEFAULT_M1;
@@ -22,9 +24,10 @@ struct simulation_params_t
     double H = DEFAULT_H;
     double L = DEFAULT_L;
     double dt = DEFAULT_DT;
+    integration_method method = integration_method::Euler;
 };
 
-enum class integration_method { Euler, RK4 };
+
 
 enum class ground_state
 {
