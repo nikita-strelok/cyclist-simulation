@@ -27,5 +27,5 @@ double hills::circular_arc_left(double x, simulation_params_t params)
 
 double hills::cosine_modulated(double x, simulation_params_t params)
 {
-    return (params.H / params.L) * (params.L - x) * cos(2 * M_PI * x / params.L);
+    return (params.H / params.L) * (params.L - x) * cos(2 * PI * x / params.L);
 }

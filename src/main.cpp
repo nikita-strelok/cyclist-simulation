@@ -3,6 +3,11 @@
 #include <string>
 #include <string.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <locale>
+#endif
+
 #include "simulation.hpp"
 #include "hills.hpp"
 
@@ -46,7 +51,7 @@ void print_help()
 
 void print_hills()
 {
-    for (uint i = 0; i < hill_count; i++)
+    for (unsigned int i = 0; i < hill_count; i++)
     {
         std::cout << i << '.' << hills_list[i].desc << '\n';
     }
@@ -54,6 +59,12 @@ void print_hills()
 
 int main(int argc, char *argv[])
 {
+
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    std::locale::global(std::locale(""));
+#endif
 
     bool draw_trajectory = false;
     int hill_index = 0;

@@ -1,6 +1,11 @@
 CXX = g++
 CXXFLAGS = -std=c++20 -Wall -Wextra -pedantic -g -Iinclude
 
+WIN_CXX = x86_64-w64-mingw32-g++
+WIN_CXXFLAGS = $(CXXFLAGS) -static-libstdc++ -static-libgcc
+
+WIN_TARGET = cyclist_sim.exe
+
 TARGET = cyclist_sim
 TEST_TARGET = cyclist_sim_tests
 
@@ -34,5 +39,10 @@ test: $(TEST_TARGET)
 $(TEST_TARGET): $(TEST_OBJS)
 	$(CXX) $(CXXFLAGS) $^ -lgtest -lgtest_main -lpthread -o $@
 
+win: $(WIN_TARGET)
+
+$(WIN_TARGET): $(SRCS)
+	$(WIN_CXX) $(WIN_CXXFLAGS) $^ -o $@
+
 clean:
-	rm -f $(OBJS) $(TEST_OBJS) $(TARGET) $(TEST_TARGET)
+	rm -f $(OBJS) $(TEST_OBJS) $(TARGET) $(TEST_TARGET) $(WIN_TARGET)

@@ -11,6 +11,7 @@ const double DEFAULT_L = 60;
 const double DEFAULT_DT = 0.001;
 
 const double G = 9.80665;
+const double PI = 3.14159265359;
 
 
 struct simulation_params_t
