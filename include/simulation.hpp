@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <fstream>
 
 
 const double DEFAULT_M1 = 60;
@@ -25,6 +26,7 @@ struct simulation_params_t
     double L = DEFAULT_L;
     double dt = DEFAULT_DT;
     integration_method method = integration_method::Euler;
+    std::ofstream* file_stream = nullptr;
 };
 
 

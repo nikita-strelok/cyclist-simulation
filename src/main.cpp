@@ -123,7 +123,21 @@ int main(int argc, char *argv[])
 
     auto hill_profile = hills_list[hill_index % hill_count];
 
+    std::ofstream file("trajectory.txt");
+
+    if(!file.is_open())
+    {
+        std::cerr << "Не удалось открыть файл для записи x(t)!\n";
+    }else
+    {
+        params.file_stream = &file;
+    }
+
+    
+
     auto result = simulate(hill_profile.func, params);
+
+    file.close();
 
     if (result.state == ground_state::detached)
     {

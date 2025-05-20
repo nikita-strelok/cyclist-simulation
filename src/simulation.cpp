@@ -1,7 +1,5 @@
 #include "simulation.hpp"
-#include <fstream>
 #include <cmath>
-#include <iostream>
 
 double derivative(std::function<double(double)> f, double x, double h = 1e-6)
 {
@@ -18,19 +16,20 @@ struct state_t
     double v;
 };
 
-// Производные
 state_t derivatives(const state_t &s, std::function<double(double)> y, simulation_params_t params)
 {
     double M = params.m1 + params.m2;
     double dy = derivative(y, s.x);
-    double theta = atan(dy);
 
-    double Fg = M * G * sin(fabs(theta)) * (dy < 0 ? 1 : -1);
+    // theta = arctg(dy)
+    // sin(theta) = dy/sqrt(1+dy*dy)
+
+    double Fg = M * G * -(dy / sqrt(1 + dy * dy));
     double Fd = params.beta * pow(params.m1, 2.0 / 3.0) * s.v;
 
     double a = (Fg - Fd) / M;
 
-    return {s.v, a}; // dx/dt = v, dv/dt = a
+    return {s.v, a};
 }
 
 // Метод Эйлера
@@ -68,13 +67,6 @@ simulation_result_t simulate(std::function<double(double, simulation_params_t)> 
     auto y = [func, params](double x)
     { return func(x, params); };
 
-    std::ofstream file("trajectory.txt");
-    if (!file.is_open())
-    {
-        std::cerr << "Не удалось открыть файл для записи траектории.\n";
-    }
-
-    // Выбор метода интегрирования
     state_t (*integration_step)(const state_t &, std::function<double(double)>, simulation_params_t);
 
     if (params.method == integration_method::Euler)
@@ -88,7 +80,10 @@ simulation_result_t simulate(std::function<double(double, simulation_params_t)> 
 
     while (state.x <= params.L + 1e-6)
     {
-        file << t << " " << state.x << " " << y(state.x) << "\n";
+        if (params.file_stream)
+        {
+            *params.file_stream << t << " " << state.x << " " << y(state.x) << "\n";
+        }
 
         double dy = derivative(y, state.x);
         double ddy = derivative2(y, state.x);
@@ -96,7 +91,7 @@ simulation_result_t simulate(std::function<double(double, simulation_params_t)> 
 
         double R = pow(1 + dy * dy, 3.0 / 2.0) / fabs(ddy);
         double N = (params.m1 + params.m2) * G * cos(theta) - (params.m1 + params.m2) * state.v * state.v / R;
-
+ 
         if (N <= 1e-6)
         {
             return {state.v, t, state.x, ground_state::detached};
@@ -110,8 +105,6 @@ simulation_result_t simulate(std::function<double(double, simulation_params_t)> 
         state = integration_step(state, y, params);
         t += params.dt;
     }
-
-    file.close();
 
     return {state.v, t, state.x, ground_state::finished};
 }
