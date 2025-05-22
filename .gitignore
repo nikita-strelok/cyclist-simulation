@@ -3,3 +3,4 @@ cyclist_sim
 cyclist_sim_tests
 trajectory.txt
 .vscode/
+.build/

@@ -2,7 +2,6 @@
 #include <functional>
 #include <fstream>
 
-
 const double DEFAULT_M1 = 60;
 const double DEFAULT_M2 = 10;
 const double DEFAULT_V0_KMH = 18;
@@ -30,6 +29,11 @@ struct simulation_params_t
 };
 
 
+struct state_t
+{
+    double x;
+    double v;
+};
 
 enum class ground_state
 {
@@ -38,6 +42,12 @@ enum class ground_state
     detached
 };
 
+
+
+
+
+state_t simulate_cyclist(std::function<double(double, simulation_params_t)> func, state_t state, simulation_params_t params);
+
 struct simulation_result_t {
     double final_velocity;
     double time;
@@ -45,5 +55,5 @@ struct simulation_result_t {
     ground_state state;
 };
 
-
 simulation_result_t simulate(std::function<double(double,simulation_params_t)> y, simulation_params_t params);
+

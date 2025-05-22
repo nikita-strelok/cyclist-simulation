@@ -10,12 +10,6 @@ double derivative2(std::function<double(double)> f, double x, double h = 1e-6)
     return (f(x + h) - 2 * f(x) + f(x - h)) / (h * h);
 }
 
-struct state_t
-{
-    double x;
-    double v;
-};
-
 state_t derivatives(const state_t &s, std::function<double(double)> y, simulation_params_t params)
 {
     double M = params.m1 + params.m2;
@@ -59,6 +53,42 @@ state_t rk4_step(const state_t &s, std::function<double(double)> y, simulation_p
         s.v + (k1.v + 2 * k2.v + 2 * k3.v + k4.v) * params.dt / 6};
 }
 
+state_t simulate_cyclist(std::function<double(double, simulation_params_t)> func, state_t state, simulation_params_t params)
+{
+    state_t (*integration_step)(const state_t &, std::function<double(double)>, simulation_params_t);
+
+    if (params.method == integration_method::Euler)
+    {
+        integration_step = euler_step;
+    }
+    else
+    {
+        integration_step = rk4_step;
+    }
+
+    auto y = [func, params](double x)
+    { return func(x, params); };
+
+    double dy = derivative(y, state.x);
+    double ddy = derivative2(y, state.x);
+    double theta = atan(dy);
+
+    double R = pow(1 + dy * dy, 3.0 / 2.0) / fabs(ddy);
+    double N = (params.m1 + params.m2) * G * cos(theta) - (params.m1 + params.m2) * state.v * state.v / R;
+
+    if (N <= 1e-6)
+    {
+        
+    }
+
+    if (state.v <= 1e-6)
+    {
+        
+    }
+
+    return integration_step(state, y, params);
+}
+
 simulation_result_t simulate(std::function<double(double, simulation_params_t)> func, simulation_params_t params)
 {
     double t = 0.0;
@@ -91,7 +121,7 @@ simulation_result_t simulate(std::function<double(double, simulation_params_t)> 
 
         double R = pow(1 + dy * dy, 3.0 / 2.0) / fabs(ddy);
         double N = (params.m1 + params.m2) * G * cos(theta) - (params.m1 + params.m2) * state.v * state.v / R;
- 
+
         if (N <= 1e-6)
         {
             return {state.v, t, state.x, ground_state::detached};
@@ -108,3 +138,4 @@ simulation_result_t simulate(std::function<double(double, simulation_params_t)> 
 
     return {state.v, t, state.x, ground_state::finished};
 }
+

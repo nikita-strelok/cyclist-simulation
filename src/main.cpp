@@ -2,9 +2,15 @@
 #include <functional>
 #include <string>
 #include <string.h>
+#include <cmath>
+
+#include <SDL3/SDL.h>
 
 #include "simulation.hpp"
 #include "hills.hpp"
+#include "plotter.hpp"
+#include "cyclist.hpp"
+
 
 hill_t hills_list[]{
     {"y(x) = (H/L)*(L-x)", hills::linear},
@@ -43,7 +49,7 @@ void print_help()
     std::cout << H_ARG << "<число>\t Задать высоту холма в м (по умочанию: " << DEFAULT_H << ")\n";
     std::cout << L_ARG << "<число>\t Задать длину холма в м (по умочанию: " << DEFAULT_L << ")\n";
     std::cout << DT_ARG << "<число>\tЗадать шаг симуляции в с (по умолчанию: " << DEFAULT_DT << ")\n";
-    //std::cout << METHOD_ARG << 
+    // std::cout << METHOD_ARG <<
 }
 
 void print_hills()
@@ -54,8 +60,34 @@ void print_hills()
     }
 }
 
+
+
 int main(int argc, char *argv[])
 {
+
+    if (!SDL_Init(SDL_INIT_VIDEO))
+    {
+        std::cerr << "Init error : " << SDL_GetError() << std::endl;
+        return EXIT_FAILURE;
+    }
+    int scr_w = 1280, scr_h = 720;
+
+    auto window = SDL_CreateWindow("Math cyclist", scr_w, scr_h, SDL_WINDOW_RESIZABLE);
+
+    if (!window)
+    {
+        std::cerr << "Window creation error : " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, nullptr);
+
+    if (!renderer)
+    {
+        std::cerr << "Renderer creation error : " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
 
     bool draw_trajectory = false;
     int hill_index = 0;
@@ -125,15 +157,68 @@ int main(int argc, char *argv[])
 
     std::ofstream file("trajectory.txt");
 
-    if(!file.is_open())
+    if (!file.is_open())
     {
         std::cerr << "Не удалось открыть файл для записи x(t)!\n";
-    }else
+    }
+    else
     {
         params.file_stream = &file;
     }
 
+    bool isRunning = true;
+
     
+    cyclist guy("Никита", "assets/neket.png", {255,0,0,255}, hill_profile.func, params);
+    cyclist guy2("Богдан", "assets/neket.png",  {0,255,0,255}, hills::circular_arc_right, params);
+    
+
+    plotter plotter(&params);
+    plotter.add_cyclist(&guy);
+    plotter.add_cyclist(&guy2);
+
+    plotter.redraw(renderer,scr_w, scr_h);
+
+    uint64_t prev_time = SDL_GetTicks();
+
+
+    while (isRunning)
+    {
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
+
+        
+        uint64_t current_time = SDL_GetTicks();
+        double dt = ( current_time - prev_time ) / 1000.0;
+        prev_time = current_time;
+
+        plotter.simulation_step(dt);
+
+        
+        plotter.render(renderer,scr_w, scr_h);
+
+        SDL_RenderPresent(renderer);
+        
+
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_EventType::SDL_EVENT_QUIT:
+                isRunning = false;
+                break;
+            case SDL_EventType::SDL_EVENT_WINDOW_RESIZED:
+                scr_w = event.window.data1;
+                scr_h = event.window.data2;
+                plotter.redraw(renderer, scr_w, scr_h);
+            }
+        }
+    }
+
+    SDL_Quit();
+
+    return EXIT_SUCCESS;
 
     auto result = simulate(hill_profile.func, params);
 

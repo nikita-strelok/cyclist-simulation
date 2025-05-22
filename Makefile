@@ -1,5 +1,6 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra -pedantic -g -Iinclude
+CXXFLAGS = -std=c++20 -Wall -Wextra -pedantic -g -I$(INCLUDE_DIR) $(shell pkg-config --cflags sdl3)
+LDFLAGS = $(shell pkg-config --libs sdl3)
 
 TARGET = cyclist_sim
 TEST_TARGET = cyclist_sim_tests
@@ -7,22 +8,31 @@ TEST_TARGET = cyclist_sim_tests
 SRC_DIR = src
 TEST_DIR = tests
 INCLUDE_DIR = include
+BUILD_DIR = .build
+BUILD_APP = $(BUILD_DIR)/app
+BUILD_TEST = $(BUILD_DIR)/test
 
-SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/simulation.cpp $(SRC_DIR)/hills.cpp
-OBJS = $(SRCS:.cpp=.o)
+SRCS = $(wildcard $(SRC_DIR)/*.cpp)
+TEST_SRCS = $(wildcard $(TEST_DIR)/*.cpp)
 
-TEST_SRCS = $(TEST_DIR)/simulation_test.cpp $(SRC_DIR)/simulation.cpp $(SRC_DIR)/hills.cpp
-TEST_OBJS = $(TEST_SRCS:.cpp=.o)
+APP_OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_APP)/%.o,$(SRCS))
+
+TEST_SRC_SRCS = $(filter-out $(SRC_DIR)/main.cpp,$(SRCS))
+TEST_OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_TEST)/%.o,$(TEST_SRC_SRCS)) \
+            $(patsubst $(TEST_DIR)/%.cpp,$(BUILD_TEST)/%.o,$(TEST_SRCS))
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+$(TARGET): $(APP_OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-%.o: %.cpp %.h
+$(BUILD_APP)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_APP)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-%.o: %.cpp
+$(BUILD_TEST)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_TEST)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(BUILD_TEST)/%.o: $(TEST_DIR)/%.cpp | $(BUILD_TEST)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 run: $(TARGET)
@@ -34,5 +44,8 @@ test: $(TEST_TARGET)
 $(TEST_TARGET): $(TEST_OBJS)
 	$(CXX) $(CXXFLAGS) $^ -lgtest -lgtest_main -lpthread -o $@
 
+$(BUILD_APP) $(BUILD_TEST):
+	mkdir -p $@
+
 clean:
-	rm -f $(OBJS) $(TEST_OBJS) $(TARGET) $(TEST_TARGET)
+	rm -rf $(BUILD_DIR) $(TARGET) $(TEST_TARGET)
